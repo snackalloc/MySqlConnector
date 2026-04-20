@@ -363,6 +363,7 @@ internal sealed class ResultSet(MySqlDataReader dataReader)
 	public ResultSetState State { get; private set; }
 	public bool HasResultSet => !(State == ResultSetState.None || ColumnDefinitions.Length == 0);
 	public bool ContainsCommandParameters { get; private set; }
+	public bool IsBinary => Command.TryGetPreparedStatements() is not null;
 
 	private ResizableArray<byte>? m_columnDefinitionPayloadBytes;
 	private int m_columnDefinitionPayloadUsedBytes;

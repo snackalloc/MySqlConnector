@@ -432,6 +432,19 @@ internal sealed class Row
 
 	public object this[string name] => GetValue(ResultSet.GetOrdinal(name));
 
+	public int DataLength => m_data.Length;
+
+	// Writes interleaved pairs: [offset0, length0, offset1, length1, ...] into a span of length fieldCount * 2.
+	public void CopyTo(Span<byte> data, Span<int> offsetsAndLengths)
+	{
+		m_data.Span.CopyTo(data);
+		for (var i = 0; i < m_dataOffsetLengths.Length; i++)
+		{
+			offsetsAndLengths[i * 2] = m_dataOffsetLengths[i].Offset;
+			offsetsAndLengths[i * 2 + 1] = m_dataOffsetLengths[i].Length;
+		}
+	}
+
 	private ResultSet ResultSet { get; }
 	private MySqlConnection Connection => ResultSet.Connection;
 

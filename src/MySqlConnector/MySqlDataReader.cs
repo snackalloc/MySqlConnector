@@ -714,4 +714,11 @@ public sealed class MySqlDataReader : DbDataReader, IDbColumnSchemaGenerator
 	private bool m_hasWarnings;
 	private bool m_hasMoreResults;
 	private DataTable? m_schemaTable;
+
+	public bool IsBinary => m_resultSet.IsBinary;
+
+	public int RowLength => m_resultSet.GetCurrentRow().DataLength;
+
+	public void CopyRow(Span<byte> data, Span<int> offsetsAndLengths) =>
+		m_resultSet.GetCurrentRow().CopyTo(data, offsetsAndLengths);
 }
