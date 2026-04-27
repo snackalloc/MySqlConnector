@@ -16,7 +16,7 @@ using MySqlConnector.Utilities;
 
 namespace MySqlConnector;
 
-public sealed class MySqlParameter : DbParameter, IDbDataParameter, ICloneable
+public class MySqlParameter : DbParameter, IDbDataParameter, ICloneable
 {
 	public MySqlParameter()
 		: this(default(string?), default(object?))
@@ -195,7 +195,13 @@ public sealed class MySqlParameter : DbParameter, IDbDataParameter, ICloneable
 
 	internal MySqlParameterCollection? ParameterCollection { get; set; }
 
-	internal void AppendSqlString(ByteBufferWriter writer, StatementPreparerOptions options)
+	// Hooks the typed-parameter subclass overrides. Defaults preserve the existing object-based behavior.
+	internal virtual bool IsNullForBinary => Value is null || Value == DBNull.Value;
+	internal virtual bool HasFixedTypeMapping => false;
+
+	public virtual void SetNull() => Value = null;
+
+	internal virtual void AppendSqlString(ByteBufferWriter writer, StatementPreparerOptions options)
 	{
 		var noBackslashEscapes = (options & StatementPreparerOptions.NoBackslashEscapes) == StatementPreparerOptions.NoBackslashEscapes;
 
@@ -637,7 +643,7 @@ public sealed class MySqlParameter : DbParameter, IDbDataParameter, ICloneable
 #endif
 	}
 
-	internal void AppendBinary(ByteBufferWriter writer, StatementPreparerOptions options)
+	internal virtual void AppendBinary(ByteBufferWriter writer, StatementPreparerOptions options)
 	{
 		if (Value is null || Value == DBNull.Value)
 		{
@@ -649,7 +655,7 @@ public sealed class MySqlParameter : DbParameter, IDbDataParameter, ICloneable
 		}
 	}
 
-	private void AppendBinary(ByteBufferWriter writer, object value, StatementPreparerOptions options)
+	private protected void AppendBinary(ByteBufferWriter writer, object value, StatementPreparerOptions options)
 	{
 		if (value is string stringValue)
 		{

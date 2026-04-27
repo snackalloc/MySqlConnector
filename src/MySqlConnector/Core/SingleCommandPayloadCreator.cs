@@ -217,7 +217,7 @@ internal sealed class SingleCommandPayloadCreator : ICommandPayloadCreator
 		for (var i = 0; i < parameters.Length; i++)
 		{
 			var parameter = parameters[i];
-			if (parameter.Value is null || parameter.Value == DBNull.Value)
+			if (parameter.IsNullForBinary)
 				nullBitmap |= (byte) (1 << (i % 8));
 
 			if (i % 8 == 7)
@@ -237,7 +237,12 @@ internal sealed class SingleCommandPayloadCreator : ICommandPayloadCreator
 			// override explicit MySqlDbType with inferred type from the Value
 			var parameter = parameters[index];
 			var mySqlDbType = parameter.MySqlDbType;
-			var typeMapping = (parameter.Value is null || parameter.Value == DBNull.Value) ? null : TypeMapper.Instance.GetDbTypeMapping(parameter.Value.GetType());
+
+			// MySqlParameter<T> pins MySqlDbType at construction, so the inference dance below is
+			// unnecessary (and would re-introduce a per-call dictionary lookup).
+			var typeMapping = parameter.HasFixedTypeMapping || parameter.IsNullForBinary
+				? null
+				: TypeMapper.Instance.GetDbTypeMapping(parameter.Value!.GetType());
 			if (typeMapping is not null)
 			{
 				var dbType = typeMapping.DbTypes[0];
